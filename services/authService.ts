@@ -1,3 +1,4 @@
+'use server';
 export const login = async (email: string, password: string) => {
     const response = await fetch(process.env.API_URL + '/login', {
         method: 'POST',

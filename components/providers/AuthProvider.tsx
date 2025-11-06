@@ -25,7 +25,13 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     const [userToken, setUserToken] = useState<string | null>(null);
     //   const [role, setRole] = useState<string | null>(null);
     const [id, setId] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState<boolean>(false); // No mostrar spinner por defecto
+    // Iniciar con isLoading=true si hay token en localStorage para evitar redirecciones prematuras
+    const [isLoading, setIsLoading] = useState<boolean>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('token') !== null;
+        }
+        return false;
+    });
     const [isValidating, setIsValidating] = useState<boolean>(false); // Evitar bucles de renovación
     const [resetHandlers, setResetHandlers] = useState<(() => void)[]>([]);
 
@@ -77,19 +83,37 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
             //   }
 
             const decodedToken = decodeToken(token);
+            console.log('Token decodificado:', decodedToken);
+            
             if (!decodedToken) {
                 await logout('Error al procesar el token.');
                 return;
             }
 
+            // Verificar que el token tenga los campos necesarios
+            if (!decodedToken.exp || !decodedToken.sub) {
+                console.error('Token no tiene campos requeridos (exp, sub):', decodedToken);
+                await logout('Token inválido - faltan campos requeridos.');
+                return;
+            }
+
             // Check iat and exp fields from decodedToken to check expiration
-
             const nowTime = Math.floor(Date.now() / 1000); // Tiempo actual en segundos
+            const expTime = Number(decodedToken.exp);
+            
+            console.log(`Tiempo actual: ${nowTime}, Tiempo de expiración: ${expTime}, Expirado: ${nowTime > expTime}`);
 
-            if (nowTime > (decodedToken.exp as number)) {
+            if (nowTime > expTime) {
                 await logout('Tu sesión ha expirado.');
                 return;
             }
+
+            // Si el token es válido, restaurar el estado del provider
+            // Esto permite mantener userToken e id después de recargar la página
+            setUserToken(token);
+            setId(String(decodedToken.sub)); // Convertir a string sin importar si es número o string
+            
+            console.log('Token restaurado correctamente, userToken:', token, 'id:', String(decodedToken.sub));
 
         } catch (error) {
             console.error('Error en validación de token:', error);
@@ -130,12 +154,15 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     };
 
     // Cargar token al iniciar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         const loadToken = async () => {
             const token = localStorage.getItem('token');
+            console.log('Iniciando carga de token, token encontrado:', !!token, 'isLoading:', isLoading);
             if (token) {
                 await handleTokenValidation(token);
             } else {
+                console.log('No hay token, estableciendo isLoading a false');
                 setIsLoading(false); // No hay token, no mostrar spinner
             }
         };
