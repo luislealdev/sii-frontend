@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from "@/components/providers";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { LoadingSpinner, AppBar } from "@/components/ui";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -41,11 +41,12 @@ export default function RootLayout({
     // }
 
     return (
-        <div className="flex">
-            {/* Sidebar */}
-            {/* <AdminSidebar /> */}
+        <div className="min-h-screen bg-gray-50">
+            {/* AppBar superior */}
+            <AppBar />
+            
             {/* Contenido principal */}
-            <main className="flex-1 p-6 bg-gray-100 min-h-screen">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {children}
             </main>
         </div>
