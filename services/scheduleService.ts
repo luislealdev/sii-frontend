@@ -1,7 +1,7 @@
 'use server';
 
 export const fetchScheduleData = async (token: string) => {
-    const response = await fetch(`${process.env.API_URL}/movil/estudiante/horario`, {
+    const response = await fetch(`${process.env.API_URL}/movil/estudiante/horarios`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
