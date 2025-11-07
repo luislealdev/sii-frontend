@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, FC, PropsWithChildren } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, FC, PropsWithChildren } from 'react';
 import { toast } from 'sonner';
 import { fetchKardexData } from '@/services/kardexService';
 import { useAuth } from './AuthProvider';
@@ -49,41 +49,41 @@ export const KardexProvider: FC<PropsWithChildren> = ({ children }) => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const { userToken, registerResetHandler } = useAuth();
+    const isRegistered = useRef(false);
 
-    // Registrar handler de reset para limpiar kardex cuando se hace logout
-    useEffect(() => {
-        const resetKardex = () => {
-            setKardexData(null);
-            setError(null);
-            setIsLoading(false);
-        };
-        registerResetHandler(resetKardex);
-    }, [registerResetHandler]);
-
-    // Limpiar estado del kardex
-    const clearKardex = () => {
+    // Limpiar estado del kardex usando useCallback para evitar re-renders
+    const clearKardex = useCallback(() => {
         setKardexData(null);
         setError(null);
         setIsLoading(false);
-    };
+    }, []);
+
+    // Registrar handler de reset solo una vez para evitar loops
+    useEffect(() => {
+        if (!isRegistered.current && registerResetHandler) {
+            console.log('Registrando handler de reset para kardex');
+            registerResetHandler(clearKardex);
+            isRegistered.current = true;
+        }
+    }, [registerResetHandler, clearKardex]);
 
     // Obtener materias por semestre
-    const getMateriasBySemestre = (semestre: number): KardexMateria[] => {
+    const getMateriasBySemestre = useCallback((semestre: number): KardexMateria[] => {
         if (!kardexData) return [];
         return kardexData.kardex.filter(materia => materia.semestre === semestre);
-    };
+    }, [kardexData]);
 
     // Calcular total de créditos
-    const getTotalCreditos = (): number => {
+    const getTotalCreditos = useCallback((): number => {
         if (!kardexData) return 0;
         return kardexData.kardex.reduce((total, materia) => {
             const creditos = parseInt(materia.creditos) || 0;
             return total + creditos;
         }, 0);
-    };
+    }, [kardexData]);
 
     // Calcular promedio general
-    const getPromedioGeneral = (): number => {
+    const getPromedioGeneral = useCallback((): number => {
         if (!kardexData) return 0;
         
         const materiasConCalificacion = kardexData.kardex.filter(materia => {
@@ -99,10 +99,10 @@ export const KardexProvider: FC<PropsWithChildren> = ({ children }) => {
         }, 0);
 
         return Math.round((sumaCalificaciones / materiasConCalificacion.length) * 100) / 100;
-    };
+    }, [kardexData]);
 
     // Función para obtener datos del kardex
-    const fetchKardex = async () => {
+    const fetchKardex = useCallback(async () => {
         if (!userToken) {
             setError('No hay token de autenticación disponible');
             return;
@@ -136,15 +136,15 @@ export const KardexProvider: FC<PropsWithChildren> = ({ children }) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [userToken]);
 
     // Cargar kardex automáticamente cuando hay token y no hay datos cargados
     useEffect(() => {
-        if (userToken && !kardexData && !isLoading) {
+        if (userToken && !kardexData && !isLoading && !error) {
             console.log('Token disponible y no hay datos de kardex, cargando automáticamente...');
             fetchKardex();
         }
-    }, [userToken]); // Solo depende del token para evitar loops
+    }, [userToken, kardexData, isLoading, error, fetchKardex]);
 
     return (
         <KardexContext.Provider

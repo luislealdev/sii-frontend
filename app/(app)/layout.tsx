@@ -45,7 +45,7 @@ export default function RootLayout({
             {/* Sidebar */}
             {/* <AdminSidebar /> */}
             {/* Contenido principal */}
-            <main className="flex-1 ml-64 p-6 bg-gray-100 min-h-screen">
+            <main className="flex-1 p-6 bg-gray-100 min-h-screen">
                 {children}
             </main>
         </div>
