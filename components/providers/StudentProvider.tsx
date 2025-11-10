@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, FC, PropsWithChildren } from 'react';
-import { toast } from 'sonner';
 import { fetchStudentData, Student, StudentResponse } from '@/services/studentService';
 import { useAuth } from './AuthProvider';
 
@@ -58,7 +57,6 @@ export const StudentProvider: FC<PropsWithChildren> = ({ children }) => {
             const errorMessage = error instanceof Error ? error.message : 'Error desconocido al cargar datos del estudiante';
             console.error('Error al obtener datos del estudiante:', error);
             setError(errorMessage);
-            toast.error(`Error: ${errorMessage}`);
         } finally {
             setIsLoading(false);
         }

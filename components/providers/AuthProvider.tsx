@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useState, useEffect, FC, PropsWithChildren } from 'react';
 import Image from 'next/image';
-import { toast } from 'sonner';
 import { decodeToken } from '@/utils/decode-token';
 
 // Interfaz del contexto
@@ -25,13 +24,8 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     const [userToken, setUserToken] = useState<string | null>(null);
     //   const [role, setRole] = useState<string | null>(null);
     const [id, setId] = useState<string | null>(null);
-    // Iniciar con isLoading=true si hay token en localStorage para evitar redirecciones prematuras
-    const [isLoading, setIsLoading] = useState<boolean>(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('token') !== null;
-        }
-        return false;
-    });
+    const [isLoading, setIsLoading] = useState<boolean>(true); // Siempre iniciar con true
+    const [mounted, setMounted] = useState<boolean>(false); // Para controlar hidratación
     const [isValidating, setIsValidating] = useState<boolean>(false); // Evitar bucles de renovación
     const [resetHandlers, setResetHandlers] = useState<(() => void)[]>([]);
 
@@ -55,10 +49,10 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
             localStorage.removeItem('token');
             clearProvider();
             if (message) {
-                toast.success(message, { duration: 3000 });
+                console.log('Logout exitoso:', message);
             }
-        } catch {
-            toast.error('Error al cerrar sesión', { duration: 3000 });
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error);
         } finally {
             setIsLoading(false);
         }
@@ -130,50 +124,59 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
         try {
             const decodedToken = decodeToken(token);
             if (!decodedToken) {
-                toast.error('Error al decodificar el token.');
+                console.error('Error al decodificar el token');
                 return;
             }
 
             if (decodedToken.userStatusId === '2') {
-                toast.error('Tu cuenta ha sido desactivada, contacta a tu distribuidor.');
+                console.error('Cuenta desactivada - userStatusId: 2');
             } else if (decodedToken.userStatusId === '3') {
-                toast.error('Esta cuenta ha sido reportada, contacta a tu distribuidor.');
+                console.error('Cuenta reportada - userStatusId: 3');
             } else {
                 localStorage.setItem('token', token);
                 setUserToken(token);
                 // setRole(decodedToken.role);
                 setId(decodedToken.sub as string);
-                toast.success('Inicio de sesión exitoso', { duration: 2000 });
+                console.log('Inicio de sesión exitoso');
             }
         } catch (error) {
             console.error('Error en login:', error);
-            toast.error('Error al iniciar sesión.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Cargar token al iniciar
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Efecto para controlar la hidratación
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Cargar token al iniciar
+    useEffect(() => {
+        if (!mounted) return; // Esperar a que el componente esté montado
+
         const loadToken = async () => {
             const token = localStorage.getItem('token');
-            console.log('Iniciando carga de token, token encontrado:', !!token, 'isLoading:', isLoading);
+            console.log('Iniciando carga de token, token encontrado:', !!token);
             if (token) {
                 await handleTokenValidation(token);
             } else {
                 console.log('No hay token, estableciendo isLoading a false');
-                setIsLoading(false); // No hay token, no mostrar spinner
+                setIsLoading(false);
             }
         };
 
         loadToken();
 
-        // Cleanup para evitar validaciones pendientes
         return () => {
             setIsValidating(false);
         };
-    }, []);
+    }, [mounted]);
+
+    // Mostrar loading solo cuando esté montado en el cliente
+    if (!mounted) {
+        return null; // No renderizar nada en el servidor
+    }
 
     return (
         <AuthContext.Provider
