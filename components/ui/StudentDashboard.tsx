@@ -3,6 +3,7 @@
 import { useStudent } from '@/components/providers';
 import { useKardex } from '@/components/providers/KardexProvider';
 import { useSchedule } from '@/components/providers/ScheduleProvider';
+import { ClassWidgets } from '@/components/ui';
 import Image from 'next/image';
 
 const StudentDashboard = () => {
@@ -55,6 +56,9 @@ const StudentDashboard = () => {
 
     return (
         <div className="space-y-6">
+            {/* Widgets de clases actuales y siguientes */}
+            <ClassWidgets />
+
             {/* Header con información principal */}
             <div className="rounded-xl shadow-lg p-6 text-white" style={{ backgroundColor: '#057007' }}>
                 <div className="flex items-center space-x-6">
