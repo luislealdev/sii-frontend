@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider, KardexProvider, ScheduleProvider, StudentProvider } from "@/components/providers";
+import { AuthProvider, KardexProvider, ScheduleProvider, StudentProvider, GradesProvider } from "@/components/providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,11 +30,13 @@ export default function RootLayout({
       >
         <AuthProvider>
           <StudentProvider>
-            <KardexProvider>
-              <ScheduleProvider>
-                {children}
-              </ScheduleProvider>
-            </KardexProvider>
+            <GradesProvider>
+              <KardexProvider>
+                <ScheduleProvider>
+                  {children}
+                </ScheduleProvider>
+              </KardexProvider>
+            </GradesProvider>
           </StudentProvider>
         </AuthProvider>
       </body>
