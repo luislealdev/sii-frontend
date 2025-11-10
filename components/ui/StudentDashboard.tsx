@@ -6,7 +6,7 @@ import { useSchedule } from '@/components/providers/ScheduleProvider';
 import Image from 'next/image';
 
 const StudentDashboard = () => {
-    const { studentData, isLoading: studentLoading, error: studentError } = useStudent();
+    const { studentData, loading: studentLoading, error: studentError } = useStudent();
     const { kardexData, isLoading: kardexLoading } = useKardex();
     const { scheduleData, isLoading: scheduleLoading } = useSchedule();
 
