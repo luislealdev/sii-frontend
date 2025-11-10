@@ -3,6 +3,7 @@
 import { useAuth } from '@/components/providers';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export const AppBar = () => {
     const { logout } = useAuth();
@@ -61,14 +62,21 @@ export const AppBar = () => {
     };
 
     return (
-        <header className="bg-gradient-to-r from-blue-700 to-green-600 shadow-lg">
+        <header className="shadow-lg" style={{ backgroundColor: '#05700E' }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center py-4">
                     {/* Logo y título */}
                     <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0">
-                            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                                <span className="text-blue-700 font-bold text-lg">ITC</span>
+                            <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center p-1">
+                                <Image
+                                    src="/img/logo-itc.png"
+                                    alt="ITC Logo"
+                                    width={40}
+                                    height={40}
+                                    className="object-contain"
+                                    priority
+                                />
                             </div>
                         </div>
                         <div className="hidden md:block">
@@ -89,9 +97,10 @@ export const AppBar = () => {
                                 key={item.path}
                                 href={item.path}
                                 className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200 ${isActive(item.path)
-                                    ? 'bg-white text-blue-700 shadow-md'
+                                    ? 'bg-white shadow-md'
                                     : 'text-white hover:bg-white hover:bg-opacity-20 hover:text-white'
                                     }`}
+                                style={isActive(item.path) ? { color: '#079C14' } : {}}
                             >
                                 {item.icon}
                                 <span className="font-medium">{item.name}</span>
@@ -106,7 +115,8 @@ export const AppBar = () => {
                             <select
                                 value={pathname}
                                 onChange={(e) => router.push(e.target.value)}
-                                className="bg-white text-blue-700 px-3 py-2 rounded-lg border-none focus:ring-2 focus:ring-blue-300"
+                                className="bg-white px-3 py-2 rounded-lg border-none focus:ring-2 focus:ring-green-300"
+                                style={{ color: '#079C14' }}
                             >
                                 {navItems.map((item) => (
                                     <option key={item.path} value={item.path}>
