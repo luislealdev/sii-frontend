@@ -33,7 +33,10 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Link 
             href="/calificaciones"
-            className="bg-blue-600 text-white p-6 rounded-lg hover:bg-blue-700 transition-colors group"
+            className="text-white p-6 rounded-lg transition-colors group"
+            style={{ backgroundColor: '#034404' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#079C0A'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#034404'}
           >
             <div className="flex items-center space-x-3">
               <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +51,10 @@ export default function Home() {
 
           <Link 
             href="/kardex"
-            className="bg-green-600 text-white p-6 rounded-lg hover:bg-green-700 transition-colors group"
+            className="text-white p-6 rounded-lg transition-colors group"
+            style={{ backgroundColor: '#034404' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#079C0A'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#034404'}
           >
             <div className="flex items-center space-x-3">
               <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,14 +62,17 @@ export default function Home() {
               </svg>
               <div>
                 <h3 className="font-semibold">Kardex</h3>
-                <p className="text-sm text-green-100">Historial académico</p>
+                <p className="text-sm text-blue-100">Historial académico</p>
               </div>
             </div>
           </Link>
 
           <Link 
             href="/horario"
-            className="bg-purple-600 text-white p-6 rounded-lg hover:bg-purple-700 transition-colors group"
+            className="text-white p-6 rounded-lg transition-colors group"
+            style={{ backgroundColor: '#034404' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#079C0A'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#034404'}
           >
             <div className="flex items-center space-x-3">
               <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -71,7 +80,7 @@ export default function Home() {
               </svg>
               <div>
                 <h3 className="font-semibold">Horario</h3>
-                <p className="text-sm text-purple-100">Clases del semestre</p>
+                <p className="text-sm text-blue-100">Clases del semestre</p>
               </div>
             </div>
           </Link>

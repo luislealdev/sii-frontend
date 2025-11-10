@@ -56,7 +56,7 @@ const StudentDashboard = () => {
     return (
         <div className="space-y-6">
             {/* Header con información principal */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+            <div className="rounded-xl shadow-lg p-6 text-white" style={{ backgroundColor: '#057007' }}>
                 <div className="flex items-center space-x-6">
                     <div className="flex-shrink-0">
                         {studentData.foto ? (
