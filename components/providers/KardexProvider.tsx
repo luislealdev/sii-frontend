@@ -38,6 +38,11 @@ interface KardexContextType {
     getMateriasBySemestre: (semestre: number) => KardexMateria[];
     getTotalCreditos: () => number;
     getPromedioGeneral: () => number;
+    getPromediosPorSemestre: () => Array<{
+        semestre: number;
+        promedio: number;
+        materiasCount: number;
+    }>;
 }
 
 // Crear contexto
@@ -101,6 +106,49 @@ export const KardexProvider: FC<PropsWithChildren> = ({ children }) => {
         return Math.round((sumaCalificaciones / materiasConCalificacion.length) * 100) / 100;
     }, [kardexData]);
 
+    // Obtener promedios por semestre para gráficos
+    const getPromediosPorSemestre = useCallback(() => {
+        if (!kardexData) return [];
+
+        const semestreMap = new Map<number, { totalCalificaciones: number; materiasCount: number; }>();
+
+        kardexData.kardex.forEach(materia => {
+            const calificacion = parseFloat(materia.calificacion);
+            const semestre = materia.semestre;
+
+            // Solo considerar materias con calificaciones válidas (mayor a 0 y no NaN)
+            if (!isNaN(calificacion) && calificacion > 0) {
+                if (!semestreMap.has(semestre)) {
+                    semestreMap.set(semestre, { totalCalificaciones: 0, materiasCount: 0 });
+                }
+                
+                const semestreData = semestreMap.get(semestre)!;
+                semestreData.totalCalificaciones += calificacion;
+                semestreData.materiasCount += 1;
+            }
+        });
+
+        // Convertir a array y calcular promedios
+        const result: Array<{
+            semestre: number;
+            promedio: number;
+            materiasCount: number;
+        }> = [];
+        
+        semestreMap.forEach((data, semestre) => {
+            if (data.materiasCount > 0) {
+                result.push({
+                    semestre,
+                    promedio: Math.round((data.totalCalificaciones / data.materiasCount) * 100) / 100,
+                    materiasCount: data.materiasCount
+                });
+            }
+        });
+
+        // Ordenar por semestre
+        return result.sort((a, b) => a.semestre - b.semestre);
+    }, [kardexData]);
+
     // Función para obtener datos del kardex
     const fetchKardex = useCallback(async () => {
         if (!userToken) {
@@ -157,6 +205,7 @@ export const KardexProvider: FC<PropsWithChildren> = ({ children }) => {
                 getMateriasBySemestre,
                 getTotalCreditos,
                 getPromedioGeneral,
+                getPromediosPorSemestre,
             }}
         >
             {children}

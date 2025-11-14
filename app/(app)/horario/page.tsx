@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useSchedule } from '@/components/providers';
+import { usePdfExport } from '@/hooks';
 
 type DiaSemana = 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado';
 
@@ -47,7 +48,7 @@ const CalendarView = ({
   isHoraEnRango: (hora: string, horario: string) => boolean;
 }) => (
   <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-6">
+    <div className="px-8 py-6" style={{ backgroundColor: '#057007' }}>
       <h2 className="text-2xl font-bold text-white flex items-center gap-3">
         📅 Calendario Semanal
         {currentPeriod && (
@@ -67,7 +68,7 @@ const CalendarView = ({
           </div>
           {dias.map(({ key, label, emoji }) => (
             <div key={key} className="text-center">
-              <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-3 mb-1">
+              <div className="rounded-lg p-3 mb-1" style={{ backgroundColor: 'rgba(5, 112, 7, 0.1)' }}>
                 <div className="text-lg mb-1">{emoji}</div>
                 <div className="font-semibold text-gray-800 text-sm">{label}</div>
                 <div className="text-xs text-gray-600 mt-1">
@@ -101,8 +102,9 @@ const CalendarView = ({
                   return (
                     <div
                       key={key}
-                      className={`relative rounded-lg p-2 text-white text-xs font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 cursor-pointer bg-gradient-to-br ${materiaColors.get(claseEnEstaHora.materia.clave_materia) || 'from-gray-400 to-gray-600'}`}
-                      style={{
+                      className="relative rounded-lg p-2 text-white text-xs font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 cursor-pointer"
+                      style={{ 
+                        backgroundColor: materiaColors.get(claseEnEstaHora.materia.clave_materia) || '#9ca3af',
                         gridRow: `span ${Math.max(1, Math.floor(duracionHoras))}`
                       }}
                       title={`${claseEnEstaHora.materia.nombre_materia} - ${claseEnEstaHora.salon}`}
@@ -156,8 +158,7 @@ const ListView = ({
 
       return (
         <div key={key} className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className={`px-6 py-4 bg-gradient-to-r ${clasesDelDia.length > 0 ? 'from-blue-500 to-purple-600' : 'from-gray-400 to-gray-500'
-            }`}>
+          <div className="px-6 py-4" style={{ backgroundColor: clasesDelDia.length > 0 ? '#057007' : '#9ca3af' }}>
             <h3 className="text-xl font-bold text-white flex items-center gap-3">
               {emoji} {label}
               <span className="text-sm font-normal opacity-90">
@@ -177,7 +178,8 @@ const ListView = ({
                 {clasesDelDia.map((clase: Clase) => (
                   <div
                     key={`${clase.materia.id_grupo}-${key}`}
-                    className={`p-4 rounded-xl bg-gradient-to-r ${materiaColors.get(clase.materia.clave_materia) || 'from-gray-400 to-gray-600'} text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1`}
+                    className="p-4 rounded-xl text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                    style={{ backgroundColor: materiaColors.get(clase.materia.clave_materia) || '#9ca3af' }}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
@@ -224,25 +226,66 @@ const SchedulePage = () => {
   } = useSchedule();
 
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const { exportToPdf, isExporting } = usePdfExport();
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
-  // Generar colores únicos para cada materia
+  // Función para manejar la exportación con notificaciones
+  const handlePdfExport = async () => {
+    const currentPeriod = getCurrentPeriod();
+    const periodText = currentPeriod ? `-${currentPeriod.periodo.clave_periodo}` : '';
+    const fileName = `horario-academico${periodText}-${viewMode}`;
+    
+    // Pasar los datos del horario directamente al hook
+    const weekSchedule = getAllClasesForWeek();
+    const result = await exportToPdf('horario-content', fileName, weekSchedule);
+    
+    if (result.success) {
+      setNotification({
+        type: 'success',
+        message: '¡PDF generado exitosamente! 📄✅'
+      });
+    } else {
+      setNotification({
+        type: 'error',
+        message: `Error: ${result.message} ❌`
+      });
+    }
+
+    // Limpiar notificación después de 3 segundos
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  // Generar colores únicos para cada materia usando azules, rojos, morados y verdes
   const materiaColors = useMemo(() => {
+    // Paleta de colores: azules, rojos, morados y verdes
     const colors = [
-      'from-blue-400 to-blue-600',
-      'from-green-400 to-green-600',
-      'from-purple-400 to-purple-600',
-      'from-pink-400 to-pink-600',
-      'from-indigo-400 to-indigo-600',
-      'from-red-400 to-red-600',
-      'from-yellow-400 to-yellow-600',
-      'from-teal-400 to-teal-600',
-      'from-orange-400 to-orange-600',
-      'from-cyan-400 to-cyan-600',
-      'from-emerald-400 to-emerald-600',
-      'from-violet-400 to-violet-600',
+      // Verdes
+      '#057007', // Verde principal
+      '#2E7D32', // Verde medio
+      '#388E3C', // Verde claro
+      '#1B5E20', // Verde oscuro
+      
+      // Azules
+      '#1976D2', // Azul medio
+      '#1565C0', // Azul oscuro
+      '#2196F3', // Azul claro
+      '#0D47A1', // Azul muy oscuro
+      
+      // Rojos
+      '#D32F2F', // Rojo medio
+      '#C62828', // Rojo oscuro
+      '#F44336', // Rojo claro
+      '#B71C1C', // Rojo muy oscuro
+      
+      // Morados
+      '#7B1FA2', // Morado medio
+      '#6A1B9A', // Morado oscuro
+      '#9C27B0', // Morado claro
+      '#4A148C', // Morado muy oscuro
     ];
 
     const colorMap = new Map();
+    // Asignar colores a todas las materias
     getMateriasActuales().forEach((materia, index) => {
       colorMap.set(materia.clave_materia, colors[index % colors.length]);
     });
@@ -250,10 +293,40 @@ const SchedulePage = () => {
     return colorMap;
   }, [getMateriasActuales]);
 
+  // Debug: Verificar datos de TOPICOS
+  React.useEffect(() => {
+    const currentPeriod = getCurrentPeriod();
+    if (currentPeriod) {
+      const materias = getMateriasActuales();
+      const topicos = materias.find(m => m.nombre_materia.includes('TOPICOS') || m.nombre_materia.includes('DESARR'));
+      
+      if (topicos) {
+        console.log('=== MATERIA TOPICOS ENCONTRADA ===');
+        console.log('Nombre:', topicos.nombre_materia);
+        console.log('Clave:', topicos.clave_materia);
+        console.log('Grupo:', topicos.letra_grupo);
+        console.log('Horarios por día:');
+        
+        const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        dias.forEach(dia => {
+          const horario = topicos[dia as keyof typeof topicos];
+          const salon = topicos[`${dia}_clave_salon` as keyof typeof topicos];
+          console.log(`  ${dia}: ${horario || 'NULL'} - Salón: ${salon || 'NULL'}`);
+        });
+        
+        console.log('Objeto completo:', topicos);
+      } else {
+        console.log('⚠️ MATERIA TOPICOS NO ENCONTRADA');
+        console.log('Materias disponibles:');
+        materias.forEach(m => console.log(`- ${m.nombre_materia} (${m.clave_materia})`));
+      }
+    }
+  }, [getCurrentPeriod, getMateriasActuales]);
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-20 w-20 border-4 border-blue-500 border-t-transparent"></div>
+        <div className="animate-spin rounded-full h-20 w-20 border-4 border-t-transparent" style={{ borderColor: '#057007', borderTopColor: 'transparent' }}></div>
         <p className="mt-4 text-gray-600 font-medium">Cargando tu horario...</p>
       </div>
     );
@@ -272,7 +345,8 @@ const SchedulePage = () => {
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={fetchSchedule}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+            className="text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:opacity-90"
+            style={{ backgroundColor: '#057007' }}
           >
             🔄 Reintentar
           </button>
@@ -294,7 +368,8 @@ const SchedulePage = () => {
           <p className="text-gray-600 mb-6">Carga tu horario académico para planificar tu semana</p>
           <button
             onClick={fetchSchedule}
-            className="bg-gradient-to-r from-blue-500 to-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-green-600 transition-all duration-300 transform hover:scale-105"
+            className="text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:opacity-90"
+            style={{ backgroundColor: '#057007' }}
           >
             📅 Cargar Horario
           </button>
@@ -358,7 +433,7 @@ const SchedulePage = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#057007' }}>
             📅 Horario Académico
           </h1>
           <p className="text-gray-600 text-lg">¡Organiza tu semana!</p>
@@ -371,17 +446,17 @@ const SchedulePage = () => {
               <div className="text-center">
                 <div className="text-3xl mb-2">📚</div>
                 <h3 className="font-semibold text-gray-700">Período Actual</h3>
-                <p className="text-blue-600 font-bold">{currentPeriod.periodo.clave_periodo}</p>
+                <p className="font-bold" style={{ color: '#057007' }}>{currentPeriod.periodo.clave_periodo}</p>
               </div>
               <div className="text-center">
                 <div className="text-3xl mb-2">🗓️</div>
                 <h3 className="font-semibold text-gray-700">Año Académico</h3>
-                <p className="text-green-600 font-bold">{currentPeriod.periodo.anio}</p>
+                <p className="font-bold" style={{ color: '#057007' }}>{currentPeriod.periodo.anio}</p>
               </div>
               <div className="text-center">
                 <div className="text-3xl mb-2">📖</div>
                 <h3 className="font-semibold text-gray-700">Total Materias</h3>
-                <p className="text-purple-600 font-bold">{totalMaterias}</p>
+                <p className="font-bold" style={{ color: '#057007' }}>{totalMaterias}</p>
               </div>
             </div>
           </div>
@@ -391,31 +466,90 @@ const SchedulePage = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <h2 className="text-2xl font-bold text-gray-800">Vista del Horario</h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setViewMode('calendar')}
                 className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${viewMode === 'calendar'
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-105'
+                    ? 'text-white shadow-lg transform scale-105'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
+                style={viewMode === 'calendar' ? { backgroundColor: '#057007' } : {}}
               >
                 📅 Calendario
               </button>
               <button
                 onClick={() => setViewMode('list')}
                 className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${viewMode === 'list'
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg transform scale-105'
+                    ? 'text-white shadow-lg transform scale-105'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
+                style={viewMode === 'list' ? { backgroundColor: '#057007' } : {}}
               >
                 📋 Lista por Días
+              </button>
+              <button
+                onClick={handlePdfExport}
+                disabled={isExporting}
+                className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+                  isExporting 
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg transform hover:scale-105'
+                }`}
+              >
+                {isExporting ? (
+                  <>
+                    <span className="animate-spin inline-block mr-2">⏳</span>
+                    Generando PDF...
+                  </>
+                ) : (
+                  <>📄 Exportar PDF</>
+                )}
               </button>
             </div>
           </div>
         </div>
 
         {/* Vista seleccionada */}
-        {viewMode === 'calendar' ? <CalendarView {...calendarProps} /> : <ListView {...listProps} />}
+        <div id="horario-content">
+          {viewMode === 'calendar' ? <CalendarView {...calendarProps} /> : <ListView {...listProps} />}
+        </div>
+
+        {/* Materias sin horario asignado */}
+        {(() => {
+          const materiasSinHorario = getMateriasActuales().filter(materia => {
+            const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+            return !dias.some(dia => materia[dia as keyof typeof materia]);
+          });
+
+          if (materiasSinHorario.length > 0) {
+            return (
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-2xl shadow-lg p-6 mt-8">
+                <h3 className="text-xl font-bold text-yellow-800 mb-4 flex items-center gap-2">
+                  ⚠️ Materias Pendientes de Horario
+                </h3>
+                <p className="text-yellow-700 mb-4">
+                  Las siguientes materias están inscritas pero no tienen horarios asignados:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {materiasSinHorario.map((materia) => (
+                    <div key={materia.id_grupo} className="bg-white rounded-lg p-4 border border-yellow-200">
+                      <h4 className="font-semibold text-gray-900 mb-1">
+                        {materia.nombre_materia}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {materia.clave_materia} - Grupo {materia.letra_grupo}
+                      </p>
+                      <div className="mt-2 text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                        📋 Horario por confirmar
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
 
         {/* Leyenda de materias */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mt-8">
@@ -424,7 +558,8 @@ const SchedulePage = () => {
             {getMateriasActuales().map((materia) => (
               <div key={materia.id_grupo} className="flex items-center gap-3">
                 <div
-                  className={`w-6 h-6 rounded-full bg-gradient-to-r ${materiaColors.get(materia.clave_materia) || 'from-gray-400 to-gray-600'} shadow-md`}
+                  className="w-6 h-6 rounded-full shadow-md"
+                  style={{ backgroundColor: materiaColors.get(materia.clave_materia) || '#9ca3af' }}
                 ></div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 truncate">
@@ -439,6 +574,25 @@ const SchedulePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Notificación flotante */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-500 ${
+          notification.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">{notification.message}</span>
+            <button 
+              onClick={() => setNotification(null)}
+              className="ml-2 text-white hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 'use client';
 
 import { useKardex } from '@/components/providers';
+import { GradeEvolutionChart } from '@/components/ui';
 import { useState } from 'react';
 
 const KardexPage = () => {
@@ -38,7 +39,8 @@ const KardexPage = () => {
           <p className="text-gray-600 mb-6">{error}</p>
           <button 
             onClick={fetchKardex}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+            className="text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:opacity-90"
+            style={{ backgroundColor: '#057007' }}
           >
             🔄 Reintentar
           </button>
@@ -60,7 +62,8 @@ const KardexPage = () => {
           <p className="text-gray-600 mb-6">Carga tu kardex académico para ver todas tus materias y calificaciones</p>
           <button 
             onClick={fetchKardex}
-            className="bg-gradient-to-r from-blue-500 to-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-green-600 transition-all duration-300 transform hover:scale-105"
+            className="text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:opacity-90"
+            style={{ backgroundColor: '#057007' }}
           >
             📚 Cargar Kardex
           </button>
@@ -73,22 +76,6 @@ const KardexPage = () => {
   const totalCreditos = getTotalCreditos();
   const promedioGeneral = getPromedioGeneral();
   const avance = kardexData.porcentaje_avance;
-
-  // Función para obtener el color según la calificación
-  const getGradeColor = (calificacion: string) => {
-    const cal = parseFloat(calificacion);
-    if (isNaN(cal)) {
-      if (calificacion === 'AC') return 'from-blue-400 to-blue-600';
-      return 'from-gray-400 to-gray-600';
-    }
-    if (cal >= 95) return 'from-emerald-400 to-emerald-600';
-    if (cal >= 90) return 'from-green-400 to-green-600';
-    if (cal >= 85) return 'from-lime-400 to-lime-600';
-    if (cal >= 80) return 'from-yellow-400 to-yellow-600';
-    if (cal >= 75) return 'from-orange-400 to-orange-600';
-    if (cal >= 70) return 'from-red-400 to-red-600';
-    return 'from-red-600 to-red-800';
-  };
 
   const getGradeEmoji = (calificacion: string) => {
     const cal = parseFloat(calificacion);
@@ -106,7 +93,7 @@ const KardexPage = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header con animación */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-transparent mb-4" style={{ color: '#057007' }}>
             📊 Kardex
           </h1>
           <p className="text-gray-600 text-lg">¡Revisa tu progreso académico!</p>
@@ -123,11 +110,11 @@ const KardexPage = () => {
             <div className="relative">
               <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
                 <div 
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded-full transition-all duration-1000 ease-out"
-                  style={{ width: `${avance}%` }}
+                  className="h-4 rounded-full transition-all duration-1000 ease-out"
+                  style={{ width: `${avance}%`, backgroundColor: '#057007' }}
                 ></div>
               </div>
-              <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <p className="text-3xl font-bold" style={{ color: '#057007' }}>
                 {avance.toFixed(1)}%
               </p>
             </div>
@@ -139,7 +126,7 @@ const KardexPage = () => {
               <h3 className="text-lg font-semibold text-gray-800">Total Créditos</h3>
               <div className="text-3xl">📚</div>
             </div>
-            <p className="text-4xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 bg-clip-text text-transparent">
+            <p className="text-4xl font-bold" style={{ color: '#057007' }}>
               {totalCreditos}
             </p>
             <p className="text-sm text-gray-500 mt-2">créditos acumulados</p>
@@ -151,12 +138,15 @@ const KardexPage = () => {
               <h3 className="text-lg font-semibold text-gray-800">Promedio General</h3>
               <div className="text-3xl">⭐</div>
             </div>
-            <p className="text-4xl font-bold bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">
+            <p className="text-4xl font-bold" style={{ color: '#057007' }}>
               {promedioGeneral}
             </p>
             <p className="text-sm text-gray-500 mt-2">promedio ponderado</p>
           </div>
         </div>
+
+        {/* Gráfico de evolución del promedio */}
+        <GradeEvolutionChart />
 
         {/* Navegación por semestres */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
@@ -166,9 +156,10 @@ const KardexPage = () => {
               onClick={() => setSelectedSemestre(null)}
               className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
                 selectedSemestre === null
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-105'
+                  ? 'text-white shadow-lg transform scale-105'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
+              style={selectedSemestre === null ? { backgroundColor: '#057007' } : {}}
             >
               Todos los Semestres
             </button>
@@ -178,9 +169,10 @@ const KardexPage = () => {
                 onClick={() => setSelectedSemestre(semestre)}
                 className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
                   selectedSemestre === semestre
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg transform scale-105'
+                    ? 'text-white shadow-lg transform scale-105'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
+                style={selectedSemestre === semestre ? { backgroundColor: '#057007' } : {}}
               >
                 Semestre {semestre}
               </button>
@@ -194,7 +186,7 @@ const KardexPage = () => {
             const materias = getMateriasBySemestre(semestre);
             return (
               <div key={semestre} className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-6">
+                <div className="px-8 py-6" style={{ backgroundColor: '#057007' }}>
                   <h2 className="text-2xl font-bold text-white flex items-center gap-3">
                     🎓 Semestre {semestre}
                     <span className="text-lg font-normal opacity-90">({materias.length} materias)</span>
@@ -225,7 +217,7 @@ const KardexPage = () => {
 
                         {/* Calificación destacada */}
                         <div className="mb-4">
-                          <div className={`inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r ${getGradeColor(materia.calificacion)} text-white font-bold text-lg shadow-md`}>
+                          <div className="inline-flex items-center px-4 py-2 rounded-full text-white font-bold text-lg shadow-md" style={{ backgroundColor: '#057007' }}>
                             {materia.calificacion}
                           </div>
                         </div>
