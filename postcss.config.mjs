@@ -1,6 +1,7 @@
 const config = {
   plugins: {
-    "@tailwindcss/postcss": {},
+    "@csstools/postcss-color-function": {}, // PRIMERO: convierte lab() a RGB
+    "@tailwindcss/postcss": {},             // DESPUÉS: procesa Tailwind
   },
 };
 

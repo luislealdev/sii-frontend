@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useSchedule } from '@/components/providers';
+import { usePdfExport } from '@/hooks';
 
 type DiaSemana = 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado';
 
@@ -225,6 +226,34 @@ const SchedulePage = () => {
   } = useSchedule();
 
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const { exportToPdf, isExporting } = usePdfExport();
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+
+  // Función para manejar la exportación con notificaciones
+  const handlePdfExport = async () => {
+    const currentPeriod = getCurrentPeriod();
+    const periodText = currentPeriod ? `-${currentPeriod.periodo.clave_periodo}` : '';
+    const fileName = `horario-academico${periodText}-${viewMode}`;
+    
+    // Pasar los datos del horario directamente al hook
+    const weekSchedule = getAllClasesForWeek();
+    const result = await exportToPdf('horario-content', fileName, weekSchedule);
+    
+    if (result.success) {
+      setNotification({
+        type: 'success',
+        message: '¡PDF generado exitosamente! 📄✅'
+      });
+    } else {
+      setNotification({
+        type: 'error',
+        message: `Error: ${result.message} ❌`
+      });
+    }
+
+    // Limpiar notificación después de 3 segundos
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   // Generar colores únicos para cada materia usando azules, rojos, morados y verdes
   const materiaColors = useMemo(() => {
@@ -263,6 +292,36 @@ const SchedulePage = () => {
 
     return colorMap;
   }, [getMateriasActuales]);
+
+  // Debug: Verificar datos de TOPICOS
+  React.useEffect(() => {
+    const currentPeriod = getCurrentPeriod();
+    if (currentPeriod) {
+      const materias = getMateriasActuales();
+      const topicos = materias.find(m => m.nombre_materia.includes('TOPICOS') || m.nombre_materia.includes('DESARR'));
+      
+      if (topicos) {
+        console.log('=== MATERIA TOPICOS ENCONTRADA ===');
+        console.log('Nombre:', topicos.nombre_materia);
+        console.log('Clave:', topicos.clave_materia);
+        console.log('Grupo:', topicos.letra_grupo);
+        console.log('Horarios por día:');
+        
+        const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        dias.forEach(dia => {
+          const horario = topicos[dia as keyof typeof topicos];
+          const salon = topicos[`${dia}_clave_salon` as keyof typeof topicos];
+          console.log(`  ${dia}: ${horario || 'NULL'} - Salón: ${salon || 'NULL'}`);
+        });
+        
+        console.log('Objeto completo:', topicos);
+      } else {
+        console.log('⚠️ MATERIA TOPICOS NO ENCONTRADA');
+        console.log('Materias disponibles:');
+        materias.forEach(m => console.log(`- ${m.nombre_materia} (${m.clave_materia})`));
+      }
+    }
+  }, [getCurrentPeriod, getMateriasActuales]);
 
   if (isLoading) {
     return (
@@ -322,35 +381,6 @@ const SchedulePage = () => {
   const currentPeriod = getCurrentPeriod();
   const weekSchedule = getAllClasesForWeek();
   const totalMaterias = getTotalMaterias();
-
-  // Debug: Verificar datos de TOPICOS
-  React.useEffect(() => {
-    if (currentPeriod) {
-      const materias = getMateriasActuales();
-      const topicos = materias.find(m => m.nombre_materia.includes('TOPICOS') || m.nombre_materia.includes('DESARR'));
-      
-      if (topicos) {
-        console.log('=== MATERIA TOPICOS ENCONTRADA ===');
-        console.log('Nombre:', topicos.nombre_materia);
-        console.log('Clave:', topicos.clave_materia);
-        console.log('Grupo:', topicos.letra_grupo);
-        console.log('Horarios por día:');
-        
-        const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-        dias.forEach(dia => {
-          const horario = topicos[dia as keyof typeof topicos];
-          const salon = topicos[`${dia}_clave_salon` as keyof typeof topicos];
-          console.log(`  ${dia}: ${horario || 'NULL'} - Salón: ${salon || 'NULL'}`);
-        });
-        
-        console.log('Objeto completo:', topicos);
-      } else {
-        console.log('⚠️ MATERIA TOPICOS NO ENCONTRADA');
-        console.log('Materias disponibles:');
-        materias.forEach(m => console.log(`- ${m.nombre_materia} (${m.clave_materia})`));
-      }
-    }
-  }, [currentPeriod, getMateriasActuales]);
 
   const dias: { key: DiaSemana; label: string; emoji: string }[] = [
     { key: 'lunes', label: 'Lunes', emoji: '🌟' },
@@ -436,7 +466,7 @@ const SchedulePage = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <h2 className="text-2xl font-bold text-gray-800">Vista del Horario</h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setViewMode('calendar')}
                 className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${viewMode === 'calendar'
@@ -457,12 +487,32 @@ const SchedulePage = () => {
               >
                 📋 Lista por Días
               </button>
+              <button
+                onClick={handlePdfExport}
+                disabled={isExporting}
+                className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+                  isExporting 
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg transform hover:scale-105'
+                }`}
+              >
+                {isExporting ? (
+                  <>
+                    <span className="animate-spin inline-block mr-2">⏳</span>
+                    Generando PDF...
+                  </>
+                ) : (
+                  <>📄 Exportar PDF</>
+                )}
+              </button>
             </div>
           </div>
         </div>
 
         {/* Vista seleccionada */}
-        {viewMode === 'calendar' ? <CalendarView {...calendarProps} /> : <ListView {...listProps} />}
+        <div id="horario-content">
+          {viewMode === 'calendar' ? <CalendarView {...calendarProps} /> : <ListView {...listProps} />}
+        </div>
 
         {/* Materias sin horario asignado */}
         {(() => {
@@ -524,6 +574,25 @@ const SchedulePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Notificación flotante */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-500 ${
+          notification.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">{notification.message}</span>
+            <button 
+              onClick={() => setNotification(null)}
+              className="ml-2 text-white hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
